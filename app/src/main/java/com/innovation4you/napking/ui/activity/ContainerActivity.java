@@ -6,13 +6,13 @@ import android.support.v4.app.FragmentTransaction;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
 
-import com.amerbauer.dictionary.R;
+import com.innovation4you.napking.R;
 
-import butterknife.Bind;
+import butterknife.BindView;
 
 public abstract class ContainerActivity<T extends Fragment> extends BaseActivity {
 
-	@Bind(R.id.activity_fragment_container_content)
+	@BindView(R.id.activity_fragment_container_content)
 	protected FrameLayout container;
 
 	protected T fragment;

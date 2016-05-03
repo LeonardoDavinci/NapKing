@@ -1,4 +1,13 @@
 <resources>
 	<string name="app_name">NapKing</string>
 	<string name="retry">Retry</string>
+	<string-array name="weekdays">
+		<item>Monday</item>
+		<item>Tuesday</item>
+		<item>Wednesday</item>
+		<item>Thursday</item>
+		<item>Friday</item>
+		<item>Saturday</item>
+		<item>Sunday</item>
+	</string-array>
 </resources>

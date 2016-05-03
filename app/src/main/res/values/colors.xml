@@ -3,4 +3,11 @@
 	<color name="primary">#3F51B5</color>
 	<color name="primaryDark">#303F9F</color>
 	<color name="accent">#FF4081</color>
+
+	<!-- Occupancy levels-->
+	<color name="occupancy_level_low">@color/md_green_500</color>
+	<color name="occupancy_level_middle">@color/md_orange_500</color>
+	<color name="occupancy_level_high">@color/md_red_500</color>
+
+	<color name="occupancy_chart_base_line">@color/md_grey_400</color>
 </resources>
