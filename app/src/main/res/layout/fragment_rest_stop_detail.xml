@@ -5,8 +5,12 @@
 	android:orientation="vertical">
 
 	<HorizontalScrollView
+		android:id="@+id/fragment_rest_stop_detail_occupancy_chart_scroll_view"
 		android:layout_width="match_parent"
-		android:layout_height="200dp">
+		android:layout_height="200dp"
+		android:clipToPadding="false"
+		android:paddingLeft="@dimen/content"
+		android:paddingRight="@dimen/content">
 
 		<com.innovation4you.napking.ui.view.OccupancyChartView
 			android:id="@+id/fragment_rest_stop_detail_occupancy_chart"

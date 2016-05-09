@@ -8,6 +8,7 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -15,6 +16,8 @@ import com.innovation4you.napking.R;
 import com.innovation4you.napking.model.OccupancyEntry;
 import com.innovation4you.napking.util.platform.DimensionUtils;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -48,15 +51,22 @@ public class OccupancyChartView extends View {
 		init();
 	}
 
+	final DateFormat timeIndicatorFormatter = SimpleDateFormat.getTimeInstance(DateFormat.SHORT);
+
 	List<OccupancyEntry> occupancyEntries;
+	int drivingDuration;
+
 	float barWidth, barSpacing;
 	float baseLineWidth, smallIndicatorHeight, bigIndicatorHeight;
-	Paint barPaint, baseLinePaint;
+	Paint barPaint, baseLinePaint, indicatorPaint;
 	int[] occupancyLevelColors = new int[3];
-	List<Label> labels;
+	List<Label> timeLabels;
 	float[] indicators;
-	float labelHeight;
-	float nowIndicatorX;
+	float timeLabelHeight, indicatorLabelHeight;
+	float nowIndicatorX, arrivalIndicatorX;
+	float contentSpace;
+	Label[] indicatorLabels;
+	float indicatorTextTextSize, indicatorTimeTextSize;
 
 	private void init() {
 		barWidth = DimensionUtils.convertDipToPixel(16, getContext());
@@ -64,6 +74,7 @@ public class OccupancyChartView extends View {
 		baseLineWidth = DimensionUtils.convertDipToPixel(2, getContext());
 		smallIndicatorHeight = DimensionUtils.convertDipToPixel(4, getContext());
 		bigIndicatorHeight = DimensionUtils.convertDipToPixel(8, getContext());
+		contentSpace = getResources().getDimension(R.dimen.content);
 
 		occupancyLevelColors[0] = ContextCompat.getColor(getContext(), R.color.occupancy_level_low);
 		occupancyLevelColors[1] = ContextCompat.getColor(getContext(), R.color.occupancy_level_middle);
@@ -76,6 +87,12 @@ public class OccupancyChartView extends View {
 		baseLinePaint.setStrokeWidth(baseLineWidth);
 		baseLinePaint.setTextSize(DimensionUtils.convertSpToPixels(10, getContext()));
 		baseLinePaint.setColor(ContextCompat.getColor(getContext(), R.color.occupancy_chart_base_line));
+
+		indicatorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+		indicatorPaint.setStrokeWidth(baseLineWidth);
+		indicatorTextTextSize = DimensionUtils.convertSpToPixels(14, getContext());
+		indicatorTimeTextSize = DimensionUtils.convertSpToPixels(18, getContext());
+		indicatorPaint.setTextSize(indicatorTimeTextSize);
 
 		weekDayTexts = getContext().getResources().getStringArray(R.array.weekdays);
 	}
@@ -95,14 +112,18 @@ public class OccupancyChartView extends View {
 
 	private void compile() {
 		if (occupancyEntries != null && !occupancyEntries.isEmpty()) {
-			labels = new ArrayList<>(occupancyEntries.size() + 7);
+			timeLabels = new ArrayList<>(occupancyEntries.size() + 7);
 			indicators = new float[occupancyEntries.size() * 4];
-			baseLineY = getHeight() * 0.7f;
+			baseLineY = getHeight() * 0.52f;
 
-			// Calculate text height
+			// Calculate time labels text height
 			final Rect rect = new Rect();
 			baseLinePaint.getTextBounds("TEST", 0, 4, rect);
-			labelHeight = rect.height();
+			timeLabelHeight = rect.height();
+
+			// Calculate indicator labels text height
+			indicatorPaint.getTextBounds("TEST", 0, 4, rect);
+			indicatorLabelHeight = rect.height();
 
 			OccupancyEntry oe;
 			int lastWeekDay = -1;
@@ -127,8 +148,8 @@ public class OccupancyChartView extends View {
 					indicatorHeight = bigIndicatorHeight;
 					text = getWeekDayText(oe.weekDay);
 					x = labelCenter - baseLinePaint.measureText(text) / 2;
-					y = baseLineY + baseLineWidth * 3 + labelHeight * 2 + bigIndicatorHeight;
-					labels.add(new Label(text, x, y));
+					y = baseLineY + baseLineWidth * 3 + timeLabelHeight * 2 + bigIndicatorHeight;
+					timeLabels.add(new Label(text, x, y));
 					lastWeekDay = oe.weekDay;
 				}
 
@@ -136,22 +157,46 @@ public class OccupancyChartView extends View {
 				if (i % SKIP_LABEL_COUNT == 0) {
 					text = getHourText(oe);
 					x = labelCenter - baseLinePaint.measureText(text) / 2;
-					y = baseLineY + baseLineWidth * 2 + labelHeight + bigIndicatorHeight;
-					labels.add(new Label(text, x, y));
+					y = baseLineY + baseLineWidth * 2 + timeLabelHeight + bigIndicatorHeight;
+					timeLabels.add(new Label(text, x, y));
 				}
 
 				indicators[indicatorPos + 3] = indicators[indicatorPos + 1] + indicatorHeight;
 				indicatorPos += 4;
 			}
 
-			calculateNowIndicatorPosition();
+			compileTimeIndicators();
 		}
 	}
 
-	private void calculateNowIndicatorPosition() {
+	private void compileTimeIndicators() {
+		indicatorLabels = new Label[4];
 		final Calendar now = new GregorianCalendar();
-		nowIndicatorX = ((now.get(Calendar.DAY_OF_WEEK) - 2) * 24 + now.get(Calendar.HOUR_OF_DAY) + 1) * (barWidth + barSpacing)
-				+ now.get(Calendar.MINUTE) * (barWidth / 60f);
+		nowIndicatorX = calculateTimeIndicatorPosition(now);
+
+		String text = timeIndicatorFormatter.format(now.getTime());
+		indicatorPaint.setTextSize(indicatorTimeTextSize);
+		indicatorLabels[0] = new Label(text, nowIndicatorX - indicatorPaint.measureText(text) / 2, getHeight() - indicatorLabelHeight *
+				2 - 15);
+		text = getResources().getString(R.string.now);
+		indicatorPaint.setTextSize(indicatorTextTextSize);
+		indicatorLabels[1] = new Label(text, nowIndicatorX - indicatorPaint.measureText(text) / 2, getHeight() - indicatorLabelHeight);
+
+		now.add(Calendar.MILLISECOND, drivingDuration);
+		arrivalIndicatorX = calculateTimeIndicatorPosition(now);
+
+		text = timeIndicatorFormatter.format(now.getTime());
+		indicatorPaint.setTextSize(indicatorTimeTextSize);
+		indicatorLabels[2] = new Label(text, arrivalIndicatorX - indicatorPaint.measureText(text) / 2, getHeight() - indicatorLabelHeight
+				* 2 - 15);
+		text = getResources().getString(R.string.arrival);
+		indicatorPaint.setTextSize(indicatorTextTextSize);
+		indicatorLabels[3] = new Label(text, arrivalIndicatorX - indicatorPaint.measureText(text) / 2, getHeight() - indicatorLabelHeight);
+	}
+
+	private float calculateTimeIndicatorPosition(final Calendar time) {
+		return ((time.get(Calendar.DAY_OF_WEEK) - 2) * 24 + time.get(Calendar.HOUR_OF_DAY) + 1) * (barWidth + barSpacing)
+				+ time.get(Calendar.MINUTE) * (barWidth / 60f);
 	}
 
 	@NonNull
@@ -180,6 +225,11 @@ public class OccupancyChartView extends View {
 				x = i * (barWidth + barSpacing) + barWidth / 2;
 				barPaint.setColor(getOccupancyColor(oe.occupancy));
 				canvas.drawLine(x, baseLineY, x, baseLineY - baseLineY * (oe.occupancy / 100f), barPaint);
+
+				// Check if arrivalIndicator is on the bar
+				if (x - barWidth / 2 <= arrivalIndicatorX && x + barWidth / 2 >= arrivalIndicatorX) {
+					indicatorPaint.setColor(barPaint.getColor());
+				}
 			}
 
 			// Draw baseline
@@ -187,16 +237,32 @@ public class OccupancyChartView extends View {
 			canvas.drawLine(0f, baseLineMiddle, getWidth(), baseLineMiddle, baseLinePaint);
 			canvas.drawLines(indicators, baseLinePaint);
 
-			// Draw labels
+			// Draw timeLabels
 			Label label;
-			for (int i = 0; i < labels.size(); i++) {
-				label = labels.get(i);
-				canvas.drawText(label.text, label.x, label.y, baseLinePaint);
+			for (int i = 0; i < timeLabels.size(); i++) {
+				label = timeLabels.get(i);
+				drawLabel(canvas, label, baseLinePaint);
 			}
 
+			// Draw arrival time indicator
+			canvas.drawLine(arrivalIndicatorX, 0, arrivalIndicatorX, indicatorLabels[2].y - contentSpace, indicatorPaint);
+			indicatorPaint.setTextSize(indicatorTimeTextSize);
+			drawLabel(canvas, indicatorLabels[2], indicatorPaint);
+			indicatorPaint.setTextSize(indicatorTextTextSize);
+			drawLabel(canvas, indicatorLabels[3], indicatorPaint);
+
 			// Draw current time indicator
-			canvas.drawLine(nowIndicatorX, 0, nowIndicatorX, getHeight(), baseLinePaint);
+			indicatorPaint.setColor(baseLinePaint.getColor());
+			canvas.drawLine(nowIndicatorX, 0, nowIndicatorX, indicatorLabels[0].y - contentSpace, indicatorPaint);
+			indicatorPaint.setTextSize(indicatorTimeTextSize);
+			drawLabel(canvas, indicatorLabels[0], indicatorPaint);
+			indicatorPaint.setTextSize(indicatorTextTextSize);
+			drawLabel(canvas, indicatorLabels[1], indicatorPaint);
 		}
+	}
+
+	private void drawLabel(final Canvas canvas, final Label label, final Paint paint) {
+		canvas.drawText(label.text, label.x, label.y, paint);
 	}
 
 	private int getOccupancyColor(final int occupancy) {
@@ -209,10 +275,20 @@ public class OccupancyChartView extends View {
 		return occupancyLevelColors[level];
 	}
 
-	public void setOccupancyEntries(List<OccupancyEntry> occupancyEntries) {
+	public void setup(final List<OccupancyEntry> occupancyEntries, final int drivingDuration) {
 		this.occupancyEntries = occupancyEntries;
+		this.drivingDuration = drivingDuration;
 		Collections.sort(this.occupancyEntries);
 		requestLayout();
+	}
+
+	public void updateTimeIndicators() {
+		compileTimeIndicators();
+		ViewCompat.postInvalidateOnAnimation(this);
+	}
+
+	public float getNowIndicatorX() {
+		return nowIndicatorX;
 	}
 
 	private static class Label {
