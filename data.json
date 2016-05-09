@@ -1,0 +1,17 @@
+[{
+    "name": "Braavos",
+    "lat": 40.7127837,
+    "lng": -74.00594130000002,
+    "occupancies": [
+      {
+        "weekday": 0,
+        "hour": 0,
+        "occupancy": 80
+      },
+      {
+        "weekday": 0,
+        "hour": 1,
+        "occupancy": 85
+      }]
+  }
+]

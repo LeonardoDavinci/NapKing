@@ -5,6 +5,7 @@ import java.util.List;
 public class RestStop {
 
 	public String name;
+	public double lat, lng;
 	public List<OccupancyEntry> occupancies;
 
 	public RestStop(String name, List<OccupancyEntry> occupancies) {
