@@ -6,6 +6,8 @@ public class RestStop {
 
 	public String name;
 	public double lat, lng;
+	public int parkingSpaces;
+	public String[] facilities;
 	public List<OccupancyEntry> occupancies;
 
 	public RestStop(String name, List<OccupancyEntry> occupancies) {

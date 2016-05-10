@@ -2,6 +2,8 @@
     "name": "Braavos",
     "lat": 40.7127837,
     "lng": -74.00594130000002,
+    "parkingSpaces": 200,
+    "facilities": ["toilet", "shop", "repair", "gas"],
     "occupancies": [
       {
         "weekday": 0,
