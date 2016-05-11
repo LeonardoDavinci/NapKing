@@ -7,4 +7,6 @@ import java.util.List;
 public interface INapKingDataProvider {
 
 	List<RestStop> findRestStops(final String condition);
+
+	RestStop findRestStopById(final long id);
 }

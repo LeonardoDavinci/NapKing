@@ -1,4 +1,4 @@
-package com.innovation4you.napking.ui.activity;
+package com.innovation4you.napking.ui.activity.base;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;

@@ -10,12 +10,25 @@ import java.util.Random;
 public class NapKingStaticDataProvider implements INapKingDataProvider {
 
 	final Random occupancyRandom = new Random();
+	private List<RestStop> restStops = new ArrayList<>();
+
+	public NapKingStaticDataProvider() {
+		restStops.add(createRestStop());
+	}
 
 	@Override
 	public List<RestStop> findRestStops(String condition) {
-		final List<RestStop> restStops = new ArrayList<>();
-		restStops.add(createRestStop());
 		return restStops;
+	}
+
+	@Override
+	public RestStop findRestStopById(long id) {
+		for (RestStop restStop : restStops) {
+			if (restStop.id == id) {
+				return restStop;
+			}
+		}
+		return null;
 	}
 
 	private RestStop createRestStop() {
@@ -27,6 +40,6 @@ public class NapKingStaticDataProvider implements INapKingDataProvider {
 				}
 			}
 		}
-		return new RestStop("Braavos", occupancies);
+		return new RestStop(restStops.size(), "Braavos", occupancies, 40.7127837, -74.00594130000002);
 	}
 }

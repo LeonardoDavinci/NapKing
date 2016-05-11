@@ -10,4 +10,9 @@ public class NapKingJSONDataProvider implements INapKingDataProvider {
 	public List<RestStop> findRestStops(String condition) {
 		return null;
 	}
+
+	@Override
+	public RestStop findRestStopById(long id) {
+		return null;
+	}
 }

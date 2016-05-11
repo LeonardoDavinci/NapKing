@@ -1,20 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
-	android:orientation="vertical">
+	android:fitsSystemWindows="true">
 
-	<HorizontalScrollView
-		android:id="@+id/fragment_rest_stop_detail_occupancy_chart_scroll_view"
+	<android.support.design.widget.AppBarLayout
+		android:id="@+id/fragment_rest_stop_detail_appbar_layout"
 		android:layout_width="match_parent"
-		android:layout_height="200dp"
-		android:clipToPadding="false"
-		android:paddingLeft="@dimen/content"
-		android:paddingRight="@dimen/content">
+		android:layout_height="wrap_content"
+		android:fitsSystemWindows="true"
+		android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+		app:expanded="true">
 
-		<com.innovation4you.napking.ui.view.OccupancyChartView
-			android:id="@+id/fragment_rest_stop_detail_occupancy_chart"
-			android:layout_width="wrap_content"
-			android:layout_height="match_parent"/>
-	</HorizontalScrollView>
-</LinearLayout>
+		<android.support.design.widget.CollapsingToolbarLayout
+			android:id="@+id/fragment_rest_stop_detail_collapsing_toolbar_layout"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:background="@android:color/transparent"
+			android:fitsSystemWindows="true"
+			app:contentScrim="?attr/colorPrimary"
+			app:expandedTitleMarginBottom="@dimen/content"
+			app:layout_scrollFlags="scroll|exitUntilCollapsed">
+
+			<ImageView
+				android:id="@+id/fragment_rest_stop_detail_map"
+				android:layout_width="match_parent"
+				android:layout_height="220dp"
+				android:fitsSystemWindows="true"
+				app:layout_collapseMode="parallax"/>
+
+			<android.support.v7.widget.Toolbar
+				android:id="@+id/fragment_rest_stop_detail_toolbar"
+				android:layout_width="match_parent"
+				android:layout_height="?attr/actionBarSize"
+				app:layout_collapseMode="pin"/>
+
+		</android.support.design.widget.CollapsingToolbarLayout>
+
+	</android.support.design.widget.AppBarLayout>
+
+	<android.support.v4.widget.NestedScrollView
+		android:id="@+id/fragment_rest_stop_detail_scrollview"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:clipToPadding="false"
+		android:paddingBottom="@dimen/content"
+		android:paddingTop="@dimen/content"
+		app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical">
+
+			<TextView
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginBottom="@dimen/content"
+				android:layout_marginLeft="32dp"
+				android:layout_marginTop="8dp"
+				android:text="Expected Occupancy"/>
+
+			<HorizontalScrollView
+				android:id="@+id/fragment_rest_stop_detail_occupancy_chart_scroll_view"
+				android:layout_width="match_parent"
+				android:layout_height="200dp"
+				android:clipToPadding="false"
+				android:paddingLeft="@dimen/content"
+				android:paddingRight="@dimen/content">
+
+				<com.innovation4you.napking.ui.view.OccupancyChartView
+					android:id="@+id/fragment_rest_stop_detail_occupancy_chart"
+					android:layout_width="wrap_content"
+					android:layout_height="match_parent"/>
+			</HorizontalScrollView>
+		</LinearLayout>
+	</android.support.v4.widget.NestedScrollView>
+
+
+</android.support.design.widget.CoordinatorLayout>
+

@@ -24,4 +24,8 @@ public class NapKingService {
 	public static List<RestStop> getRestStops(final String condition) {
 		return instance.dataProvider.findRestStops(condition);
 	}
+
+	public static RestStop getRestStop(final long id) {
+		return instance.dataProvider.findRestStopById(id);
+	}
 }
