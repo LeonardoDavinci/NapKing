@@ -3,6 +3,7 @@
 	<string name="retry">Retry</string>
 	<string name="arrival">Arrival</string>
 	<string name="now">Now</string>
+	<string name="expected_occupancy">Expected Occupancy</string>
 	<string-array name="weekdays">
 		<item>Monday</item>
 		<item>Tuesday</item>

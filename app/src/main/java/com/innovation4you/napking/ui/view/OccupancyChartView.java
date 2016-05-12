@@ -70,11 +70,11 @@ public class OccupancyChartView extends View {
 
 	private void init() {
 		barWidth = DimensionUtils.convertDipToPixel(16, getContext());
-		barSpacing = DimensionUtils.convertDipToPixel(4, getContext());
+		barSpacing = DimensionUtils.convertDipToPixel(2, getContext());
 		baseLineWidth = DimensionUtils.convertDipToPixel(2, getContext());
 		smallIndicatorHeight = DimensionUtils.convertDipToPixel(4, getContext());
 		bigIndicatorHeight = DimensionUtils.convertDipToPixel(8, getContext());
-		contentSpace = getResources().getDimension(R.dimen.content);
+		contentSpace = getResources().getDimension(R.dimen.content) * 1.5f;
 
 		occupancyLevelColors[0] = ContextCompat.getColor(getContext(), R.color.occupancy_level_low);
 		occupancyLevelColors[1] = ContextCompat.getColor(getContext(), R.color.occupancy_level_middle);
@@ -177,7 +177,7 @@ public class OccupancyChartView extends View {
 		String text = timeIndicatorFormatter.format(now.getTime());
 		indicatorPaint.setTextSize(indicatorTimeTextSize);
 		indicatorLabels[0] = new Label(text, nowIndicatorX - indicatorPaint.measureText(text) / 2, getHeight() - indicatorLabelHeight *
-				2 - 15);
+				2 - 25);
 		text = getResources().getString(R.string.now);
 		indicatorPaint.setTextSize(indicatorTextTextSize);
 		indicatorLabels[1] = new Label(text, nowIndicatorX - indicatorPaint.measureText(text) / 2, getHeight() - indicatorLabelHeight);
@@ -188,7 +188,7 @@ public class OccupancyChartView extends View {
 		text = timeIndicatorFormatter.format(now.getTime());
 		indicatorPaint.setTextSize(indicatorTimeTextSize);
 		indicatorLabels[2] = new Label(text, arrivalIndicatorX - indicatorPaint.measureText(text) / 2, getHeight() - indicatorLabelHeight
-				* 2 - 15);
+				* 2 - 25);
 		text = getResources().getString(R.string.arrival);
 		indicatorPaint.setTextSize(indicatorTextTextSize);
 		indicatorLabels[3] = new Label(text, arrivalIndicatorX - indicatorPaint.measureText(text) / 2, getHeight() - indicatorLabelHeight);
@@ -223,7 +223,9 @@ public class OccupancyChartView extends View {
 			for (int i = 0; i < occupancyEntries.size(); i++) {
 				oe = occupancyEntries.get(i);
 				x = i * (barWidth + barSpacing) + barWidth / 2;
+
 				barPaint.setColor(getOccupancyColor(oe.occupancy));
+				barPaint.setAlpha(x <= nowIndicatorX ? 100 : 255);
 				canvas.drawLine(x, baseLineY, x, baseLineY - baseLineY * (oe.occupancy / 100f), barPaint);
 
 				// Check if arrivalIndicator is on the bar

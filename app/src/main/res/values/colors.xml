@@ -10,4 +10,8 @@
 	<color name="occupancy_level_high">@color/md_red_500</color>
 
 	<color name="occupancy_chart_base_line">@color/md_grey_400</color>
+
+	<!-- Scrim -->
+	<color name="translucent_scrim_start">#44000000</color>
+	<color name="translucent_scrim_center">#33000000</color>
 </resources>
