@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="72dp"
+	android:foreground="?attr/selectableItemBackground"
+	android:paddingLeft="@dimen/content"
+	android:paddingRight="@dimen/content">
+
+	<TextView
+		android:id="@+id/list_item_rest_stop_occupancy_text"
+		android:layout_width="40dp"
+		android:layout_height="40dp"
+		android:layout_centerVertical="true"
+		android:gravity="center"
+		tools:background="@drawable/background_round"
+		tools:backgroundTint="@color/occupancy_level_high"
+		tools:text="80%"/>
+
+	<TextView
+		android:id="@+id/list_item_rest_stop_title"
+		style="@style/Base.TextAppearance.AppCompat.Body1"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@id/list_item_rest_stop_occupancy_text"
+		android:layout_marginLeft="@dimen/content"
+		android:layout_marginTop="2dp"
+		android:layout_toRightOf="@id/list_item_rest_stop_occupancy_text"
+		tools:text="Braavos Rest Stop"/>
+
+
+	<TextView
+		android:id="@+id/list_item_rest_stop_subtext"
+		style="@style/Base.TextAppearance.AppCompat.Caption"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_below="@id/list_item_rest_stop_title"
+		android:layout_marginLeft="@dimen/content"
+		android:layout_marginTop="4dp"
+		android:layout_toRightOf="@id/list_item_rest_stop_occupancy_text"
+		tools:text="18:10 arrival   245km"/>
+</RelativeLayout>

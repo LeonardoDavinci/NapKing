@@ -10,6 +10,6 @@ public class BaseViewHolder extends RecyclerView.ViewHolder {
 	public BaseViewHolder(final View itemView, final View.OnClickListener onClickListener) {
 		super(itemView);
 		ButterKnife.bind(this, itemView);
-		//itemView.setOnClickListener(onClickListener);
+		itemView.setOnClickListener(onClickListener);
 	}
 }

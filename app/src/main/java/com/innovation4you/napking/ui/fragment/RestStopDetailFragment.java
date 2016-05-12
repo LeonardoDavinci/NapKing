@@ -16,8 +16,9 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 import com.innovation4you.napking.R;
 import com.innovation4you.napking.app.Cfg;
-import com.innovation4you.napking.data.NapKingService;
+import com.innovation4you.napking.data.NapKingRepository;
 import com.innovation4you.napking.model.RestStop;
+import com.innovation4you.napking.model.SearchResult;
 import com.innovation4you.napking.ui.view.OccupancyChartView;
 import com.innovation4you.napking.util.GoogleStaticMapsUrlBuilder;
 import com.innovation4you.napking.util.platform.OneTimeLayoutChangeListener;
@@ -28,7 +29,7 @@ import butterknife.BindView;
 
 public class RestStopDetailFragment extends BaseFragment {
 
-	public static final String KEY_REST_STOP_ID = "rest_stop_id";
+	public static final String KEY_SEARCH_RESULT = "rest_stop_id";
 
 	@BindView(R.id.fragment_rest_stop_detail_collapsing_toolbar_layout)
 	CollapsingToolbarLayout collapsingToolbarLayout;
@@ -45,12 +46,11 @@ public class RestStopDetailFragment extends BaseFragment {
 	@BindView(R.id.fragment_rest_stop_detail_occupancy_chart)
 	OccupancyChartView occupancyChartView;
 
+	SearchResult searchResult;
 	RestStop restStop;
 
-	public static RestStopDetailFragment newInstance(final long restStopId) {
+	public static RestStopDetailFragment newInstance(final Bundle args) {
 		final RestStopDetailFragment f = new RestStopDetailFragment();
-		final Bundle args = new Bundle();
-		args.putLong(KEY_REST_STOP_ID, restStopId);
 		f.setArguments(args);
 		return f;
 	}
@@ -58,7 +58,10 @@ public class RestStopDetailFragment extends BaseFragment {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		restStop = getRestStop();
+		loadData();
+		if (searchResult == null || restStop == null) {
+			getActivity().finish();
+		}
 	}
 
 	@Nullable
@@ -78,7 +81,7 @@ public class RestStopDetailFragment extends BaseFragment {
 				occupancyChartScrollView.smoothScrollTo((int) occupancyChartView.getNowIndicatorX() - root.getWidth() / 2, 0);
 			}
 		});
-		occupancyChartView.setup(NapKingService.getRestStop(0).occupancies, (int) TimeUnit.MINUTES.toMillis(240));
+		occupancyChartView.setup(restStop.occupancies, (int) TimeUnit.MINUTES.toMillis(searchResult.drivingDuration));
 
 		return root;
 	}
@@ -115,10 +118,12 @@ public class RestStopDetailFragment extends BaseFragment {
 		return super.onOptionsItemSelected(item);
 	}
 
-	private RestStop getRestStop() {
-		if (getArguments() != null && getArguments().containsKey(KEY_REST_STOP_ID)) {
-			return NapKingService.getRestStop(getArguments().getLong(KEY_REST_STOP_ID));
+	private void loadData() {
+		if (getArguments() != null && getArguments().containsKey(KEY_SEARCH_RESULT)) {
+			searchResult = (SearchResult) getArguments().getSerializable(KEY_SEARCH_RESULT);
+			if (searchResult != null) {
+				restStop = NapKingRepository.get().findRestStopById(searchResult.restStopId);
+			}
 		}
-		return null;
 	}
 }

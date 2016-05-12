@@ -2,8 +2,8 @@ package com.innovation4you.napking.app;
 
 import android.app.Application;
 
-import com.innovation4you.napking.data.NapKingService;
-import com.innovation4you.napking.data.provider.NapKingJSONDataProvider;
+import com.innovation4you.napking.data.NapKingRepository;
+import com.innovation4you.napking.data.provider.NapKingStaticDataProvider;
 
 public class NapKingApplication extends Application {
 
@@ -11,6 +11,6 @@ public class NapKingApplication extends Application {
 	public void onCreate() {
 		super.onCreate();
 
-		NapKingService.init(new NapKingJSONDataProvider(this));
+		NapKingRepository.init(new NapKingStaticDataProvider(this));
 	}
 }

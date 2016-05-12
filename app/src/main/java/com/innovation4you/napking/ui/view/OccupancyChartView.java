@@ -14,6 +14,7 @@ import android.view.View;
 
 import com.innovation4you.napking.R;
 import com.innovation4you.napking.model.OccupancyEntry;
+import com.innovation4you.napking.util.OccupancyColorHelper;
 import com.innovation4you.napking.util.platform.DimensionUtils;
 
 import java.text.DateFormat;
@@ -26,8 +27,6 @@ import java.util.List;
 
 public class OccupancyChartView extends View {
 
-	private float baseLineY;
-	private String[] weekDayTexts;
 	public static final int SKIP_LABEL_COUNT = 3;
 
 	public OccupancyChartView(Context context) {
@@ -52,6 +51,7 @@ public class OccupancyChartView extends View {
 	}
 
 	final DateFormat timeIndicatorFormatter = SimpleDateFormat.getTimeInstance(DateFormat.SHORT);
+	OccupancyColorHelper occupancyColorHelper;
 
 	List<OccupancyEntry> occupancyEntries;
 	int drivingDuration;
@@ -59,7 +59,6 @@ public class OccupancyChartView extends View {
 	float barWidth, barSpacing;
 	float baseLineWidth, smallIndicatorHeight, bigIndicatorHeight;
 	Paint barPaint, baseLinePaint, indicatorPaint;
-	int[] occupancyLevelColors = new int[3];
 	List<Label> timeLabels;
 	float[] indicators;
 	float timeLabelHeight, indicatorLabelHeight;
@@ -67,18 +66,18 @@ public class OccupancyChartView extends View {
 	float contentSpace;
 	Label[] indicatorLabels;
 	float indicatorTextTextSize, indicatorTimeTextSize;
+	float baseLineY;
+	String[] weekDayTexts;
 
 	private void init() {
+		occupancyColorHelper = new OccupancyColorHelper(getContext());
+
 		barWidth = DimensionUtils.convertDipToPixel(16, getContext());
 		barSpacing = DimensionUtils.convertDipToPixel(2, getContext());
 		baseLineWidth = DimensionUtils.convertDipToPixel(2, getContext());
 		smallIndicatorHeight = DimensionUtils.convertDipToPixel(4, getContext());
 		bigIndicatorHeight = DimensionUtils.convertDipToPixel(8, getContext());
 		contentSpace = getResources().getDimension(R.dimen.content) * 1.5f;
-
-		occupancyLevelColors[0] = ContextCompat.getColor(getContext(), R.color.occupancy_level_low);
-		occupancyLevelColors[1] = ContextCompat.getColor(getContext(), R.color.occupancy_level_middle);
-		occupancyLevelColors[2] = ContextCompat.getColor(getContext(), R.color.occupancy_level_high);
 
 		barPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 		barPaint.setStrokeWidth(barWidth);
@@ -224,7 +223,7 @@ public class OccupancyChartView extends View {
 				oe = occupancyEntries.get(i);
 				x = i * (barWidth + barSpacing) + barWidth / 2;
 
-				barPaint.setColor(getOccupancyColor(oe.occupancy));
+				barPaint.setColor(occupancyColorHelper.getOccupancyColor(oe.occupancy));
 				barPaint.setAlpha(x <= nowIndicatorX ? 100 : 255);
 				canvas.drawLine(x, baseLineY, x, baseLineY - baseLineY * (oe.occupancy / 100f), barPaint);
 
@@ -265,16 +264,6 @@ public class OccupancyChartView extends View {
 
 	private void drawLabel(final Canvas canvas, final Label label, final Paint paint) {
 		canvas.drawText(label.text, label.x, label.y, paint);
-	}
-
-	private int getOccupancyColor(final int occupancy) {
-		int level = 0;
-		if (occupancy >= 65) {
-			level = 2;
-		} else if (occupancy >= 35) {
-			level = 1;
-		}
-		return occupancyLevelColors[level];
 	}
 
 	public void setup(final List<OccupancyEntry> occupancyEntries, final int drivingDuration) {

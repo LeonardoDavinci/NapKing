@@ -3,20 +3,20 @@
 	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
-	android:background="@color/background"
 	tools:context=".ui.activity.MainActivity">
+
+	<FrameLayout
+		android:id="@+id/activity_main_list_container"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"/>
 
 	<com.amerbauer.seachbox.view.SearchBox
 		android:id="@+id/activity_main_searchbox"
 		android:layout_width="match_parent"
 		android:layout_height="48dp"
 		android:layout_alignParentTop="true"
-		android:layout_margin="@dimen/content"/>
-
-	<FrameLayout
-		android:id="@+id/activity_main_list_container"
-		android:layout_width="match_parent"
-		android:layout_height="match_parent"
-		android:layout_below="@+id/activity_main_searchbox"/>
+		android:layout_marginLeft="@dimen/content"
+		android:layout_marginRight="@dimen/content"
+		android:layout_marginTop="@dimen/content"/>
 
 </android.widget.RelativeLayout>
