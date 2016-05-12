@@ -78,7 +78,7 @@ public class RestStopDetailFragment extends BaseFragment {
 				occupancyChartScrollView.smoothScrollTo((int) occupancyChartView.getNowIndicatorX() - root.getWidth() / 2, 0);
 			}
 		});
-		occupancyChartView.setup(NapKingService.getRestStops("").get(0).occupancies, (int) TimeUnit.MINUTES.toMillis(240));
+		occupancyChartView.setup(NapKingService.getRestStop(0).occupancies, (int) TimeUnit.MINUTES.toMillis(240));
 
 		return root;
 	}
