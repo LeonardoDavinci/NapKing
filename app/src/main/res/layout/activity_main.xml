@@ -8,15 +8,45 @@
 	<FrameLayout
 		android:id="@+id/activity_main_list_container"
 		android:layout_width="match_parent"
-		android:layout_height="match_parent"/>
+		android:layout_height="match_parent"
+		android:layout_below="@+id/activity_main_search_background"/>
+
+	<View
+		android:id="@+id/activity_main_search_background"
+		android:layout_width="match_parent"
+		android:layout_height="116dp"
+		android:background="@color/primary"
+		android:clipToPadding="false"
+		android:elevation="8dp"
+		android:orientation="vertical"
+		android:paddingLeft="@dimen/content"
+		android:paddingRight="@dimen/content"
+		android:paddingTop="@dimen/content"/>
+
+	<TextView
+		android:id="@+id/activity_main_button_driving_time"
+		style="@style/TextAppearance.AppCompat.Body1"
+		android:layout_width="wrap_content"
+		android:layout_height="40dp"
+		android:layout_marginBottom="4dp"
+		android:layout_marginLeft="40dp"
+		android:layout_marginTop="72dp"
+		android:background="?attr/selectableItemBackground"
+		android:drawablePadding="8dp"
+		android:drawableRight="@drawable/triangle"
+		android:elevation="8dp"
+		android:gravity="center_vertical"
+		android:paddingLeft="@dimen/content"
+		android:paddingRight="@dimen/content"
+		tools:text="2h 30m driving time left"/>
 
 	<com.amerbauer.seachbox.view.SearchBox
 		android:id="@+id/activity_main_searchbox"
 		android:layout_width="match_parent"
-		android:layout_height="48dp"
+		android:layout_height="wrap_content"
 		android:layout_alignParentTop="true"
 		android:layout_marginLeft="@dimen/content"
 		android:layout_marginRight="@dimen/content"
-		android:layout_marginTop="@dimen/content"/>
-
+		android:layout_marginTop="@dimen/content"
+		android:elevation="16dp"/>
 </android.widget.RelativeLayout>

@@ -14,15 +14,16 @@
 		android:clipChildren="false"
 		android:clipToPadding="false"
 		android:paddingRight="12dp">
- 
+		 
+
 		<ImageView
 			android:id="@+id/searchbox_back"
 			android:layout_width="48dp"
 			android:layout_height="48dp"
-			android:tint="#000"
-			tools:src="@drawable/searchback_search"
 			android:layout_alignParentLeft="true"
-			android:layout_centerVertical="true"/>
+			android:layout_centerVertical="true"
+			android:tint="#000"
+			tools:src="@drawable/searchback_search"/>
 
 		<TextView
 			android:id="@+id/searchbox_default_text"
@@ -37,6 +38,7 @@
 			android:singleLine="true"
 			android:textAppearance="?android:attr/textAppearanceMedium"
 			android:textColor="#212121"
+			android:theme="@style/Theme.AppCompat.Light"
 			tools:text="Logo"/>
 
 		<com.amerbauer.seachbox.view.BackKeyEditText
@@ -52,6 +54,7 @@
 			android:imeOptions="actionSearch"
 			android:inputType="textNoSuggestions"
 			android:singleLine="true"
+			android:theme="@style/Theme.AppCompat.Light"
 			android:visibility="gone"/>
 
 		<ProgressBar

@@ -22,7 +22,8 @@
 		android:layout_weight="1"
 		android:ellipsize="end"
 		android:scaleType="fitCenter"
-		android:singleLine="true"/>
+		android:singleLine="true"
+		android:theme="@style/Theme.AppCompat.Light"/>
 
 	<ImageView
 		android:id="@+id/up"

@@ -12,7 +12,7 @@
 		android:layout_height="match_parent"
 		android:clipToPadding="false"
 		android:paddingBottom="@dimen/content"
-		android:paddingTop="80dp"
+		android:paddingTop="4dp"
 		android:scrollbarStyle="outsideOverlay"
 		app:layoutManager="LinearLayoutManager"
 		tools:listitem="@layout/list_item_rest_stop"/>
