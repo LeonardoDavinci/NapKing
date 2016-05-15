@@ -80,6 +80,7 @@
 				android:id="@+id/fragment_rest_stop_detail_occupancy_chart_scroll_view"
 				android:layout_width="match_parent"
 				android:layout_height="220dp"
+				android:clipChildren="false"
 				android:clipToPadding="false"
 				android:paddingBottom="8dp"
 				android:paddingLeft="@dimen/content"

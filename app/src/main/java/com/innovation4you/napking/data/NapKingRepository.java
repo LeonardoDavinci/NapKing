@@ -1,5 +1,6 @@
 package com.innovation4you.napking.data;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.innovation4you.napking.data.provider.INapKingDataProvider;
 import com.innovation4you.napking.model.RestStop;
 import com.innovation4you.napking.model.SearchResult;
@@ -33,8 +34,8 @@ public class NapKingRepository implements INapKingDataProvider {
 	}
 
 	@Override
-	public List<SearchResult> search(String condition, int minutesLeft, double currentLat, double currentLng) {
-		return dataProvider.search(condition, minutesLeft, currentLat, currentLng);
+	public List<SearchResult> search(LatLng source, LatLng destination, int minutesLeft) {
+		return dataProvider.search(source, destination, minutesLeft);
 	}
 
 	@Override

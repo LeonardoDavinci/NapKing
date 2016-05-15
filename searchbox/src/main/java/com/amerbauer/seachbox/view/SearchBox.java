@@ -333,7 +333,7 @@ public class SearchBox extends RelativeLayout {
 	/***
 	 * Set the searchable items from a list (replaces any current items)
 	 */
-	public void setSuggestionItems(final ArrayList<SuggestionItem> suggestionItems) {
+	public void setSuggestionItems(final List<SuggestionItem> suggestionItems) {
 		if (suggestionItems != null && !suggestionItems.isEmpty()) {
 			suggestionsAdapter.setSuggestions(suggestionItems);
 			setSuggestionsListVisibility(true);

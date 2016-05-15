@@ -105,7 +105,7 @@ public class RestStopListFragment extends BaseFragment implements View.OnClickLi
 			final Spanny subTextSpan = new Spanny()
 					.append(dateFormatter.format(item.calculateArrivalTime()))
 					.append(" arrival   ", new TypefaceSpan("sans-serif-light"))
-					.append(String.format(Locale.ENGLISH, "%.2f", (item.distance / 1000d)))
+					.append(String.format(Locale.ENGLISH, "%.2f", (item.distanceFromSource / 1000d)))
 					.append(" km", new TypefaceSpan("sans-serif-light"));
 			viewHolder.subtext.setText(subTextSpan);
 

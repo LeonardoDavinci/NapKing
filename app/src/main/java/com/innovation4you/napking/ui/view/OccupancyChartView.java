@@ -194,7 +194,7 @@ public class OccupancyChartView extends View {
 	}
 
 	private float calculateTimeIndicatorPosition(final Calendar time) {
-		return ((time.get(Calendar.DAY_OF_WEEK) - 2) * 24 + time.get(Calendar.HOUR_OF_DAY) + 1) * (barWidth + barSpacing)
+		return (((time.get(Calendar.DAY_OF_WEEK) + 5) % 7) * 24 + time.get(Calendar.HOUR_OF_DAY) + 1) * (barWidth + barSpacing)
 				+ time.get(Calendar.MINUTE) * (barWidth / 60f);
 	}
 
