@@ -4,6 +4,8 @@
 	<string name="arrival">Arrival</string>
 	<string name="now">Now</string>
 	<string name="expected_occupancy">Expected Occupancy</string>
+	<string name="waiting_for_location">Waiting for location</string>
+	<string name="current_location">Current location: %1$s</string>
 	<string-array name="weekdays">
 		<item>Monday</item>
 		<item>Tuesday</item>

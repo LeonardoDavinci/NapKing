@@ -49,4 +49,10 @@
 		android:layout_marginRight="@dimen/content"
 		android:layout_marginTop="@dimen/content"
 		android:elevation="16dp"/>
+
+	<include
+		layout="@layout/layout_current_location"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"/>
 </android.widget.RelativeLayout>

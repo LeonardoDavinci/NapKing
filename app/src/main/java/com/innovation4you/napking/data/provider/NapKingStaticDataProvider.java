@@ -31,15 +31,13 @@ public class NapKingStaticDataProvider extends NapKingJSONDataProvider {
 		final List<OccupancyEntry> occupancies = new ArrayList<>();
 		for (int w = 0; w < 7; w++) {
 			for (int h = 0; h < 24; h++) {
-				for (int m = 0; m < 1; m++) {
-					occupancies.add(new OccupancyEntry(w, h, m, random.nextInt(100)));
-				}
+				occupancies.add(new OccupancyEntry(w, h, random.nextInt(100)));
 			}
 		}
 		return new RestStop(id, NAMES[random.nextInt(NAMES.length - 1)], occupancies, 48.220778, 16.3100205);
 	}
 
 	private static final String[] NAMES = new String[]{"Wildewyn", "Falconvale", "Goldmill", "Wyvernhollow", "Shadownesse", "Springhaven",
-			"Corbourne", "Clearbourne", "Deepbush", "Blackford", "Wyvernwynne", "Stronghurst", "Icefall" };
+			"Corbourne", "Clearbourne", "Deepbush", "Blackford", "Wyvernwynne", "Stronghurst", "Icefall"};
 
 }

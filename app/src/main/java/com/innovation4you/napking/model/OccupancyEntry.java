@@ -2,6 +2,8 @@ package com.innovation4you.napking.model;
 
 import android.support.annotation.NonNull;
 
+import java.util.Locale;
+
 public class OccupancyEntry implements Comparable<OccupancyEntry> {
 
 	public int weekDay;
@@ -12,10 +14,9 @@ public class OccupancyEntry implements Comparable<OccupancyEntry> {
 
 	public int occupancy;
 
-	public OccupancyEntry(int weekDay, int hour, int minute, int occupancy) {
+	public OccupancyEntry(int weekDay, int hour, int occupancy) {
 		this.weekDay = weekDay;
 		this.hour = hour;
-		this.minute = minute;
 		this.occupancy = occupancy;
 	}
 
@@ -33,5 +34,10 @@ public class OccupancyEntry implements Comparable<OccupancyEntry> {
 
 	private static int compareInt(int lhs, int rhs) {
 		return lhs < rhs ? -1 : (lhs == rhs ? 0 : 1);
+	}
+
+	@Override
+	public String toString() {
+		return String.format(Locale.ENGLISH, "%d-%d: %d", weekDay, hour, occupancy);
 	}
 }

@@ -89,8 +89,8 @@ public class OccupancyChartView extends View {
 
 		indicatorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 		indicatorPaint.setStrokeWidth(baseLineWidth);
-		indicatorTextTextSize = DimensionUtils.convertSpToPixels(14, getContext());
-		indicatorTimeTextSize = DimensionUtils.convertSpToPixels(18, getContext());
+		indicatorTextTextSize = DimensionUtils.convertSpToPixels(12, getContext());
+		indicatorTimeTextSize = DimensionUtils.convertSpToPixels(16, getContext());
 		indicatorPaint.setTextSize(indicatorTimeTextSize);
 
 		weekDayTexts = getContext().getResources().getStringArray(R.array.weekdays);
@@ -194,14 +194,14 @@ public class OccupancyChartView extends View {
 	}
 
 	private float calculateTimeIndicatorPosition(final Calendar time) {
-		return (((time.get(Calendar.DAY_OF_WEEK) + 5) % 7) * 24 + time.get(Calendar.HOUR_OF_DAY) + 1) * (barWidth + barSpacing)
+		return (((time.get(Calendar.DAY_OF_WEEK) + 5) % 7) * 24 + time.get(Calendar.HOUR_OF_DAY)) * (barWidth + barSpacing)
 				+ time.get(Calendar.MINUTE) * (barWidth / 60f);
 	}
 
 	@NonNull
 	private String getHourText(OccupancyEntry oe) {
 		if (oe.hour == 0) {
-			oe.hour = 24;
+			return "24";
 		}
 		return String.valueOf(oe.hour);
 	}

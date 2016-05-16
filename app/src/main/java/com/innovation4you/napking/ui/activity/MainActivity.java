@@ -1,16 +1,25 @@
 package com.innovation4you.napking.ui.activity;
 
+import android.Manifest;
+import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.text.style.TypefaceSpan;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +33,7 @@ import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.common.data.DataBufferUtils;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.AutocompletePrediction;
 import com.google.android.gms.location.places.AutocompletePredictionBuffer;
 import com.google.android.gms.location.places.Place;
@@ -31,11 +41,15 @@ import com.google.android.gms.location.places.PlaceBuffer;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.model.LatLng;
 import com.innovation4you.napking.R;
+import com.innovation4you.napking.app.Cfg;
 import com.innovation4you.napking.data.NapKingRepository;
 import com.innovation4you.napking.model.RestStop;
 import com.innovation4you.napking.model.SearchResult;
 import com.innovation4you.napking.ui.activity.base.BaseActivity;
 import com.innovation4you.napking.ui.fragment.RestStopListFragment;
+import com.innovation4you.napking.util.MessageUtils;
+import com.nispok.snackbar.Snackbar;
+import com.nispok.snackbar.listeners.ActionClickListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +63,10 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 		<PlaceBuffer> {
 
 	private static final String TAG = MainActivity.class.getSimpleName();
-	private static final String KEY_SEARCH_DESTINATION = "text";
+	private static final String KEY_SEARCH_DESTINATION = "destination";
+	private static final String KEY_SEARCH_SOURCE = "source";
 	private static final String KEY_SEARCH_MINUTES_LEFT = "minutes_left";
+	private static final int REQUEST_CODE_LOCATION = 202;
 
 	@BindView(R.id.activity_main_searchbox)
 	SearchBox searchBox;
@@ -58,13 +74,23 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 	@BindView(R.id.activity_main_button_driving_time)
 	TextView btDrivingTime;
 
+	@BindView(R.id.layout_current_location_progress)
+	ProgressBar pbLocation;
+
+	@BindView(R.id.layout_current_location_text)
+	TextView tvLocation;
+
+	@BindView(R.id.layout_current_location_container)
+	ViewGroup locationContainer;
+
 	RestStopListFragment restStopListFragment;
 
 	boolean isResultsListShown;
 	int drivingMinutesLeft = 120;
 
-	GoogleApiClient mGoogleApiClient;
+	GoogleApiClient googleApiClient;
 	LatLng currentDestination;
+	LatLng currentLocation;
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -85,30 +111,47 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 
 		updateDrivingTimeLeftButton();
 
-		//getSupportLoaderManager().initLoader(1, null, this);
 		setupSearchBox();
 		updateSearchBox();
 
-		mGoogleApiClient = new GoogleApiClient
+		updateLocationContainer();
+
+		googleApiClient = new GoogleApiClient
 				.Builder(this)
 				.addApi(Places.GEO_DATA_API)
 				.addApi(Places.PLACE_DETECTION_API)
+				.addApi(LocationServices.API)
 				.addConnectionCallbacks(this)
 				.addOnConnectionFailedListener(this)
 				.build();
+	}
 
-		//loadSearchResults("", 300);
+	private void updateLocationContainer() {
+		if (locationContainer.getVisibility() != View.VISIBLE) {
+			locationContainer.setTranslationY(100f);
+			locationContainer.setAlpha(0f);
+			locationContainer.setVisibility(View.VISIBLE);
+			locationContainer.animate().alpha(1f).translationY(0f).setStartDelay(500).setDuration(700)
+					.setInterpolator(new FastOutSlowInInterpolator());
+		}
+		if (currentLocation != null) {
+			pbLocation.setVisibility(View.INVISIBLE);
+			tvLocation.setText(getString(R.string.current_location, currentLocation.toString()));
+		} else {
+			pbLocation.setVisibility(View.VISIBLE);
+			tvLocation.setText(R.string.waiting_for_location);
+		}
 	}
 
 	@Override
 	public void onStart() {
 		super.onStart();
-		mGoogleApiClient.connect();
+		googleApiClient.connect();
 	}
 
 	@Override
 	public void onStop() {
-		mGoogleApiClient.disconnect();
+		googleApiClient.disconnect();
 		super.onStop();
 	}
 
@@ -154,7 +197,7 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 				} else if (result.tag instanceof AutocompletePrediction) {
 					searchBox.setLoading(true);
 					PendingResult<PlaceBuffer> placeResult = Places.GeoDataApi
-							.getPlaceById(mGoogleApiClient, ((AutocompletePrediction) result.tag).getPlaceId());
+							.getPlaceById(googleApiClient, ((AutocompletePrediction) result.tag).getPlaceId());
 					placeResult.setResultCallback(MainActivity.this);
 				}
 			}
@@ -212,8 +255,19 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 	}
 
 	private void loadSearchResults() {
+		if (currentLocation == null) {
+			MessageUtils.showErrorMessageWithRetry(this, R.string.waiting_for_location, new ActionClickListener() {
+				@Override
+				public void onActionClicked(Snackbar snackbar) {
+					loadSearchResults();
+				}
+			});
+			return;
+		}
+
 		final Bundle args = new Bundle();
 		args.putParcelable(KEY_SEARCH_DESTINATION, currentDestination);
+		args.putParcelable(KEY_SEARCH_SOURCE, Cfg.USE_FAKE_LOCATION ? new LatLng(48.2951579, 14.2573656) : currentLocation);
 		args.putInt(KEY_SEARCH_MINUTES_LEFT, drivingMinutesLeft);
 		getSupportLoaderManager().restartLoader(1, args, this).forceLoad();
 	}
@@ -223,7 +277,7 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 		searchBox.setLoading(true);
 
 		final LatLng destination = args.getParcelable(KEY_SEARCH_DESTINATION);
-		final LatLng source = new LatLng(48.2951579, 14.2573656);
+		final LatLng source = args.getParcelable(KEY_SEARCH_SOURCE);
 		final int minutesLeft = args.getInt(KEY_SEARCH_MINUTES_LEFT);
 
 		return new AsyncTaskLoader<List<SearchResult>>(this) {
@@ -278,27 +332,48 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 
 	@Override
 	public void onConnected(@Nullable Bundle bundle) {
+		getCurrentLocation();
+	}
 
+	private void getCurrentLocation() {
+		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+				&& ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+				!= PackageManager.PERMISSION_GRANTED) {
+
+			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+					Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_CODE_LOCATION);
+			return;
+		}
+		final Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+		currentLocation = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+		updateLocationContainer();
 	}
 
 	@Override
 	public void onConnectionSuspended(int i) {
-
 	}
 
 	@Override
 	public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+		if (connectionResult.hasResolution()) {
+			try {
+				connectionResult.startResolutionForResult(this, 112);
+			} catch (IntentSender.SendIntentException e) {
+				e.printStackTrace();
+			}
+		} else {
+			Log.i(TAG, "Location services connection failed with code " + connectionResult.getErrorCode());
+		}
 	}
 
 	private ArrayList<AutocompletePrediction> getGooglePlacesAutocomplete(final CharSequence constraint) {
-		if (mGoogleApiClient.isConnected()) {
+		if (googleApiClient.isConnected()) {
 			Log.i(TAG, "Starting autocomplete query for: " + constraint);
 
 			// Submit the query to the autocomplete API and retrieve a PendingResult that will
 			// contain the results when the query completes.
 			PendingResult<AutocompletePredictionBuffer> results =
-					Places.GeoDataApi.getAutocompletePredictions(mGoogleApiClient, constraint.toString(), null, null);
+					Places.GeoDataApi.getAutocompletePredictions(googleApiClient, constraint.toString(), null, null);
 			//new AutocompleteFilter.Builder().setTypeFilter(AutocompleteFilter.TYPE_FILTER_ESTABLISHMENT).build());
 
 			// This method should have been called off the main UI thread. Block and wait for at most 60s
@@ -341,5 +416,13 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 		loadSearchResults();
 
 		places.release();
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		if (requestCode == REQUEST_CODE_LOCATION) {
+			getCurrentLocation();
+		}
 	}
 }

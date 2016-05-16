@@ -6,6 +6,7 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,6 +24,8 @@ import com.innovation4you.napking.ui.view.OccupancyChartView;
 import com.innovation4you.napking.util.GoogleStaticMapsUrlBuilder;
 import com.innovation4you.napking.util.platform.OneTimeLayoutChangeListener;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -48,6 +51,8 @@ public class RestStopDetailFragment extends BaseFragment {
 
 	SearchResult searchResult;
 	RestStop restStop;
+	Timer timer;
+	TimerTask timerTask;
 
 	public static RestStopDetailFragment newInstance(final Bundle args) {
 		final RestStopDetailFragment f = new RestStopDetailFragment();
@@ -62,6 +67,16 @@ public class RestStopDetailFragment extends BaseFragment {
 		if (searchResult == null || restStop == null) {
 			getActivity().finish();
 		}
+
+		timer = new Timer();
+		timerTask = new TimerTask() {
+			@Override
+			public void run() {
+				if (occupancyChartView != null) {
+					occupancyChartView.updateTimeIndicators();
+				}
+			}
+		};
 	}
 
 	@Nullable
@@ -84,6 +99,24 @@ public class RestStopDetailFragment extends BaseFragment {
 		occupancyChartView.setup(restStop.occupancies, (int) TimeUnit.MINUTES.toMillis(searchResult.drivingDuration));
 
 		return root;
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		if (timer != null) {
+			timer.cancel();
+		}
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		try {
+			timer.schedule(timerTask, 60000, 60000);
+		} catch (IllegalStateException e) {
+			Log.e("TimerTask", "Couldn't start timertask: " + e.getMessage());
+		}
 	}
 
 	@Override
