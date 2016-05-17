@@ -1,6 +1,8 @@
 package com.innovation4you.napking.ui.activity;
 
 import android.Manifest;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
@@ -19,6 +21,7 @@ import android.text.style.TypefaceSpan;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,6 +36,8 @@ import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.common.data.DataBufferUtils;
+import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.AutocompletePrediction;
 import com.google.android.gms.location.places.AutocompletePredictionBuffer;
@@ -43,13 +48,21 @@ import com.google.android.gms.maps.model.LatLng;
 import com.innovation4you.napking.R;
 import com.innovation4you.napking.app.Cfg;
 import com.innovation4you.napking.data.NapKingRepository;
+import com.innovation4you.napking.event.ActivityDetectedEvent;
 import com.innovation4you.napking.model.RestStop;
 import com.innovation4you.napking.model.SearchResult;
+import com.innovation4you.napking.service.ActivityRecognitionIntentService;
 import com.innovation4you.napking.ui.activity.base.BaseActivity;
 import com.innovation4you.napking.ui.fragment.RestStopListFragment;
+import com.innovation4you.napking.util.CheatSheet;
 import com.innovation4you.napking.util.MessageUtils;
+import com.innovation4you.napking.util.platform.Interpolators;
+import com.innovation4you.napking.util.platform.OneTimeLayoutChangeListener;
 import com.nispok.snackbar.Snackbar;
 import com.nispok.snackbar.listeners.ActionClickListener;
+
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,11 +81,29 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 	private static final String KEY_SEARCH_MINUTES_LEFT = "minutes_left";
 	private static final int REQUEST_CODE_LOCATION = 202;
 
+	@BindView(R.id.activity_main_container)
+	ViewGroup rootContainer;
+
 	@BindView(R.id.activity_main_searchbox)
 	SearchBox searchBox;
 
+	@BindView(R.id.activity_main_search_background)
+	View vSearchBackground;
+
+	@BindView(R.id.activity_main_empty_text)
+	TextView tvEmptyResults;
+
 	@BindView(R.id.activity_main_button_driving_time)
 	TextView btDrivingTime;
+
+	@BindView(R.id.activity_main_driving_indicator)
+	ImageView ivDrivingIndicator;
+
+	@BindView(R.id.layout_current_location_image)
+	ImageView ivCurrentLocation;
+
+	@BindView(R.id.layout_current_location_backround)
+	View vLocationBackground;
 
 	@BindView(R.id.layout_current_location_progress)
 	ProgressBar pbLocation;
@@ -81,11 +112,11 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 	TextView tvLocation;
 
 	@BindView(R.id.layout_current_location_container)
-	ViewGroup locationContainer;
+	ViewGroup vgLocationContainer;
 
 	RestStopListFragment restStopListFragment;
 
-	boolean isResultsListShown;
+	boolean isInResultsMode;
 	int drivingMinutesLeft = 120;
 
 	GoogleApiClient googleApiClient;
@@ -107,12 +138,17 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 			restStopListFragment = (RestStopListFragment) getSupportFragmentManager().findFragmentById(R.id.activity_main_list_container);
 		}
 
-		isResultsListShown = true;
+		rootContainer.addOnLayoutChangeListener(new OneTimeLayoutChangeListener() {
+			@Override
+			public void onLayoutChange() {
+				rootContainer.removeOnLayoutChangeListener(this);
+				changeMode(false, false);
+			}
+		});
 
 		updateDrivingTimeLeftButton();
 
 		setupSearchBox();
-		updateSearchBox();
 
 		updateLocationContainer();
 
@@ -121,26 +157,19 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 				.addApi(Places.GEO_DATA_API)
 				.addApi(Places.PLACE_DETECTION_API)
 				.addApi(LocationServices.API)
+				.addApi(ActivityRecognition.API)
 				.addConnectionCallbacks(this)
 				.addOnConnectionFailedListener(this)
 				.build();
-	}
 
-	private void updateLocationContainer() {
-		if (locationContainer.getVisibility() != View.VISIBLE) {
-			locationContainer.setTranslationY(100f);
-			locationContainer.setAlpha(0f);
-			locationContainer.setVisibility(View.VISIBLE);
-			locationContainer.animate().alpha(1f).translationY(0f).setStartDelay(500).setDuration(700)
-					.setInterpolator(new FastOutSlowInInterpolator());
-		}
-		if (currentLocation != null) {
-			pbLocation.setVisibility(View.INVISIBLE);
-			tvLocation.setText(getString(R.string.current_location, currentLocation.toString()));
-		} else {
-			pbLocation.setVisibility(View.VISIBLE);
-			tvLocation.setText(R.string.waiting_for_location);
-		}
+		vgLocationContainer.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				changeMode(!isInResultsMode, true);
+			}
+		});
+
+		CheatSheet.setup(ivDrivingIndicator, "Detected driving - reducing permissible driving time");
 	}
 
 	@Override
@@ -151,6 +180,11 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 
 	@Override
 	public void onStop() {
+		if (googleApiClient.isConnected()) {
+			ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(googleApiClient,
+					createActivityRecognitionIntentServicePendingIntent());
+			Log.d(TAG, "Removed activity detection");
+		}
 		googleApiClient.disconnect();
 		super.onStop();
 	}
@@ -167,6 +201,12 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 
 	private void setupSearchBox() {
 		searchBox.setHint("Enter rest stop or location");
+		searchBox.setOnBackButtonClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onBackPressed();
+			}
+		});
 		searchBox.setSearchListener(new SearchBox.SearchListener() {
 			@Override
 			public void onSearchOpened() {
@@ -215,8 +255,9 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 			protected List<SearchBox.SuggestionItem> doInBackground(String... params) {
 				final String search = params[0];
 				final ArrayList<SearchBox.SuggestionItem> suggestions = new ArrayList<>();
-
 				final Drawable restStopIcon = getResources().getDrawable(R.drawable.ic_parking_black_24dp);
+				final Drawable placeIcon = getResources().getDrawable(R.drawable.ic_map_marker_black_36dp);
+
 				for (RestStop restStop : NapKingRepository.get().findRestStops(search)) {
 					suggestions.add(new SearchBox.SuggestionItem(restStop.name, restStopIcon, restStop));
 				}
@@ -224,7 +265,7 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 				final ArrayList<AutocompletePrediction> places = getGooglePlacesAutocomplete(search);
 				if (places != null) {
 					for (AutocompletePrediction prediction : places) {
-						suggestions.add(new SearchBox.SuggestionItem(prediction.getPrimaryText(null).toString(), restStopIcon,
+						suggestions.add(new SearchBox.SuggestionItem(prediction.getPrimaryText(null).toString(), placeIcon,
 								prediction));
 					}
 				}
@@ -245,7 +286,32 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 	}
 
 	private void updateSearchBox() {
-		searchBox.setBackButtonVisible(isResultsListShown);
+		searchBox.setBackButtonVisible(isInResultsMode);
+		searchBox.setSelected(false);
+	}
+
+	private void updateLocationContainer() {
+		if (vgLocationContainer.getVisibility() != View.VISIBLE) {
+			vgLocationContainer.setTranslationY(100f);
+			vgLocationContainer.setAlpha(0f);
+			vgLocationContainer.setVisibility(View.VISIBLE);
+			vgLocationContainer.animate().alpha(1f).translationY(0f).setStartDelay(500).setDuration(700)
+					.setInterpolator(new FastOutSlowInInterpolator());
+		}
+
+		if (currentLocation != null) {
+			pbLocation.setVisibility(View.INVISIBLE);
+			ivCurrentLocation.setVisibility(View.VISIBLE);
+			final Spanny span = new Spanny(getString(R.string.current_location) + " ", new TypefaceSpan("sans-serif-light"))
+					.append(String.valueOf(currentLocation.latitude))
+					.append(", ")
+					.append(String.valueOf(currentLocation.longitude));
+			tvLocation.setText(span);
+		} else {
+			pbLocation.setVisibility(View.VISIBLE);
+			ivCurrentLocation.setVisibility(View.INVISIBLE);
+			tvLocation.setText(R.string.waiting_for_location);
+		}
 	}
 
 	private void clearSearchResults() {
@@ -290,14 +356,104 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 
 	@Override
 	public void onLoadFinished(Loader<List<SearchResult>> loader, List<SearchResult> data) {
+		searchBox.setLoading(false);
+		final boolean hasData = data != null && !data.isEmpty();
+
 		if (restStopListFragment != null) {
 			restStopListFragment.setSearchResults(data);
+			restStopListFragment.getView().animate().alpha(hasData ? 1f : 0f);
 		}
-		searchBox.setLoading(false);
+		tvEmptyResults.animate().alpha(hasData ? 0f : 1f);
+		changeMode(true, true);
 	}
 
 	@Override
 	public void onLoaderReset(Loader<List<SearchResult>> loader) {
+	}
+
+	@Override
+	public void onBackPressed() {
+		if (isInResultsMode) {
+			changeMode(false, true);
+		} else {
+			super.onBackPressed();
+		}
+	}
+
+	private void changeMode(final boolean showResultsMode, final boolean animate) {
+		isInResultsMode = showResultsMode;
+
+		float backgroundScale = 1f;
+		float searchBoxTranslationY = 0f;
+		float drivingTimeButtonScale = 1f;
+		float drivingTimeButtonTranslationY = 0f;
+		float resultsListAlpha = 1f;
+		float resultsListTranslationY = 0f;
+		float locationBackgroundAlpha = 1f;
+		float locationContainerTranslationY = 0f;
+		float locationContainerScale = 1f;
+
+		if (!showResultsMode) {
+			final float rootContainerHeight = (float) rootContainer.getHeight();
+			backgroundScale = rootContainerHeight / vSearchBackground.getHeight();
+			searchBoxTranslationY = rootContainerHeight / 4 - searchBox.getY();
+			drivingTimeButtonTranslationY = rootContainerHeight / 4 - searchBox.getHeight() - btDrivingTime.getHeight() * 2.2f;
+			drivingTimeButtonScale = 1.5f;
+			resultsListAlpha = 0f;
+			resultsListTranslationY = 300f;
+			locationBackgroundAlpha = 0f;
+			locationContainerTranslationY = -300f;
+			locationContainerScale = 0.8f;
+		}
+
+		vSearchBackground.animate()
+				.scaleY(backgroundScale)
+				.setInterpolator(Interpolators.getLinearOutSlowInInterpolator())
+				.setDuration(animate ? 700 : 0);
+		searchBox.animate()
+				.translationY(searchBoxTranslationY)
+				.setInterpolator(Interpolators.getLinearOutSlowInInterpolator())
+				.setDuration(animate ? 700 : 0);
+		btDrivingTime.animate()
+				.scaleY(drivingTimeButtonScale)
+				.scaleX(drivingTimeButtonScale)
+				.translationY(drivingTimeButtonTranslationY)
+				.setInterpolator(Interpolators.getLinearOutSlowInInterpolator())
+				.setDuration(animate ? 700 : 0);
+
+		vLocationBackground.animate()
+				.alpha(locationBackgroundAlpha)
+				.setInterpolator(Interpolators.getLinearOutSlowInInterpolator())
+				.setStartDelay(0)
+				.setDuration(animate ? 300 : 0);
+		vgLocationContainer.animate()
+				.translationY(locationContainerTranslationY)
+				.scaleX(locationContainerScale)
+				.scaleY(locationContainerScale)
+				.setStartDelay(0)
+				.setInterpolator(Interpolators.getLinearOutSlowInInterpolator())
+				.setDuration(animate ? 300 : 0);
+
+		ivDrivingIndicator.setVisibility(showResultsMode ? View.VISIBLE : View.GONE);
+
+		if (restStopListFragment != null) {
+			restStopListFragment.getView().animate()
+					.alpha(resultsListAlpha)
+					.translationY(resultsListTranslationY)
+					.setInterpolator(Interpolators.getLinearOutSlowInInterpolator())
+					.setStartDelay(showResultsMode ? 500 : 0)
+					.setDuration(animate ? 300 : 0)
+					.withEndAction(new Runnable() {
+						@Override
+						public void run() {
+							if (!showResultsMode) {
+								clearSearchResults();
+							}
+						}
+					});
+		}
+
+		updateSearchBox();
 	}
 
 	@Override
@@ -333,6 +489,21 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 	@Override
 	public void onConnected(@Nullable Bundle bundle) {
 		getCurrentLocation();
+		ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
+				googleApiClient,
+				Cfg.ACTIVITY_DETECTION_INTERVAL,
+				createActivityRecognitionIntentServicePendingIntent()
+		).setResultCallback(new ResultCallback<Status>() {
+			@Override
+			public void onResult(@NonNull Status status) {
+				Log.d(TAG, "Added activity detection: " + status.getStatusMessage());
+			}
+		});
+	}
+
+	private PendingIntent createActivityRecognitionIntentServicePendingIntent() {
+		return PendingIntent.getService(this, 0, new Intent(this, ActivityRecognitionIntentService.class),
+				PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 
 	private void getCurrentLocation() {
@@ -424,5 +595,24 @@ public class MainActivity extends BaseActivity implements LoaderManager.LoaderCa
 		if (requestCode == REQUEST_CODE_LOCATION) {
 			getCurrentLocation();
 		}
+	}
+
+	@Subscribe(threadMode = ThreadMode.MAIN, sticky = true)
+	public void onActivityDetectedEvent(final ActivityDetectedEvent event) {
+		if (!event.detectedActivities.isEmpty()) {
+			for (DetectedActivity de : event.detectedActivities) {
+				if ((de.getType() == DetectedActivity.IN_VEHICLE || de.getType() == DetectedActivity.ON_FOOT)
+						&& de.getConfidence() > 15) {
+					ivDrivingIndicator.animate().alpha(1f);
+					return;
+				}
+			}
+		}
+		ivDrivingIndicator.animate().alpha(0f);
+	}
+
+	@Override
+	protected boolean useEventBus() {
+		return true;
 	}
 }

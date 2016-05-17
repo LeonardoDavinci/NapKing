@@ -179,10 +179,6 @@ public class SearchBox extends RelativeLayout {
 	}
 
 	public void hideSuggestions() {
-		if (TextUtils.isEmpty(getSearchTerm())) {
-			searchEditText.setVisibility(View.GONE);
-			defaultTextTextView.setVisibility(View.VISIBLE);
-		}
 		setSuggestionsListVisibility(false);
 		clearSuggestions();
 	}
@@ -277,6 +273,7 @@ public class SearchBox extends RelativeLayout {
 	 */
 	public void setIcon(Drawable icon) {
 		this.icon.setImageDrawable(icon);
+		this.icon.setVisibility(icon == null ? View.GONE : View.VISIBLE);
 	}
 
 	public void setBackButtonVisible(final boolean visible) {
@@ -368,8 +365,6 @@ public class SearchBox extends RelativeLayout {
 	}
 
 	private void openSearch() {
-		searchEditText.setVisibility(View.VISIBLE);
-		defaultTextTextView.setVisibility(View.GONE);
 		setSuggestionsListVisibility(true);
 		searchEditText.requestFocus();
 
@@ -400,8 +395,6 @@ public class SearchBox extends RelativeLayout {
 	}
 
 	private void closeSearch() {
-		searchEditText.setVisibility(View.GONE);
-		defaultTextTextView.setVisibility(View.VISIBLE);
 		setSuggestionsListVisibility(false);
 
 		if (listener != null) {

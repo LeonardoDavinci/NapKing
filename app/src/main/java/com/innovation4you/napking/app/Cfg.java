@@ -7,4 +7,5 @@ public class Cfg {
 
 	// Debug constants
 	public static final boolean USE_FAKE_LOCATION = false;
+	public static final long ACTIVITY_DETECTION_INTERVAL = 0; // in ms
 }
